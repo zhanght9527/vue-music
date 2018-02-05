@@ -12,25 +12,8 @@ const portfinder = require('portfinder')
 const axios = require('axios')
 const express = require('express')
 
-var app = express()
-
-var apiRouter = express.Router()
-
-apiRouter.get('/getDiscList', (req, res) => {
-  const url = 'https://c.y.qq.com/splcloud/fcgi-bin/fcg_get_diss_by_tag.fcg'
-
-  axios.get(url, {
-    header: {
-      referer: 'https://c.y.qq.com',
-      host: 'c.y.qq.com'
-    },
-    params: req.query
-  }).then(response => {
-    res.json(response.data)
-  }).catch(err => {
-    console.log(err)
-  })
-})
+const app = express()
+const apiRouter = express.Router()
 
 app.use('/api', apiRouter)
 
@@ -46,6 +29,22 @@ const devWebpackConfig = merge(baseWebpackConfig, {
 
   // these devServer options should be customized in /config/index.js
   devServer: {
+    before(app){
+      app.get('/api/getDiscList', function (req, res) {
+        let url = 'https://c.y.qq.com/splcloud/fcgi-bin/fcg_get_diss_by_tag.fcg'
+        axios.get(url, {
+          headers: {
+            referer: 'https://c.y.qq.com/',
+            host: 'c.y.qq.com'
+          },
+          params: req.query
+        }).then((response) => {
+          res.json(response.data)
+        }).catch((e) => {
+          console.log(e)
+        })
+      })
+    },
     clientLogLevel: 'warning',
     historyApiFallback: {
       rewrites: [
