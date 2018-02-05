@@ -5,7 +5,7 @@
       </slot>
     </div>
     <div class="dots">
-      <span class="dot" :class="{active: currentPageIndex === index}" v-for="(item, index) in dots"></span>
+      <span class="dot" :class="{active: currentPageIndex === index}" v-for="(item, index) in dots" :key="item"></span>
     </div>
   </div>
 </template>
@@ -29,7 +29,7 @@ export default {
       type: Boolean,
       default: true
     },
-    Interval: {
+    interval: {
       type: Number,
       default: 4000
     }
@@ -39,10 +39,27 @@ export default {
       this._setSliderWidth()
       this._initSlider()
       this._initDots()
+
+      if (this.autoPlay) {
+        this._play()
+      }
     }, 20)
+
+    window.addEventListener('resize', () => {
+      if (!this.slider) {
+        return
+      }
+      this._setSliderWidth(true)
+      this.slider.refresh()
+    })
+  },
+  activated () {
+    if (this.autoPlay) {
+      this._play()
+    }
   },
   methods: {
-    _setSliderWidth () {
+    _setSliderWidth (isResize) {
       this.children = this.$refs.sliderGroup.children
 
       let width = 0
@@ -54,34 +71,54 @@ export default {
         child.style.width = slideWidth + 'px'
         width += slideWidth
       }
-      if (this.loop) {
+      if (this.loop && !isResize) {
         width += 2 * slideWidth
       }
       this.$refs.sliderGroup.style.width = width + 'px'
     },
     _initDots () {
-      this.dots = new Array(this.children.length)
+      this.dots = new Array(this.children.length - 2)
     },
     _initSlider () {
       this.slider = new BScroll(this.$refs.slider, {
         scrollX: true,
         scrollY: false,
         momentum: false,
-        snap: true,
-        snapLoop: this.loop,
-        snapThreshold: 0.3,
-        snapSpeed: 400,
-        click: true
+        snap: {
+          loop: this.loop, // 循环
+          threshold: 0.3, // // 滚动距离超过宽度/高度的 30% 时切换图片
+          speed: 400 // 轮播间隔
+        }
       })
 
       this.slider.on('scrollEnd', () => {
         let pageIndex = this.slider.getCurrentPage().pageX
-        if (this.loop) {
-          pageIndex -= 1
-        }
+        // if (this.loop) {
+        //   pageIndex -= 1
+        // }
         this.currentPageIndex = pageIndex
+
+        if (this.autoPlay) {
+          clearTimeout(this.timer)
+          this._play()
+        }
       })
+    },
+    _play () {
+      let pageIndex = this.currentPageIndex + 1
+      // if (this.loop) {
+      //   pageIndex += 1
+      // }
+      if (pageIndex === this.dots.length) {
+        pageIndex = 0
+      }
+      this.timer = setTimeout(() => {
+        this.slider.goToPage(pageIndex, 0, 400)
+      }, this.interval)
     }
+  },
+  destroyed () {
+    clearTimeout(this.timer) // 有利于内存的释放
   }
 }
 </script>
