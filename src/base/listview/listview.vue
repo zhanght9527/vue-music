@@ -1,5 +1,5 @@
 <template>
-  <scroll class="listview" :data="data" ref="listview">
+  <scroll class="listview" :data="data" ref="listview" :listenScroll="listenScroll">
     <ul>
       <li v-for="group in data" class="list-group" :key="group.title" ref="listGroup">
         <h2 class="list-group-title">{{group.title}}</h2>
@@ -30,6 +30,7 @@ const ANCHOR_HEIGHT = 18
 export default {
   created () {
     this.touch = {}
+    this.listenScroll = true
   },
   props: {
     data: {
@@ -56,8 +57,7 @@ export default {
       let firstTouch = e.touches[0]
       this.touch.y2 = firstTouch.pageY
       let delta = (this.touch.y2 - this.touch.y1) / ANCHOR_HEIGHT | 0
-      let anchorIndex = this.touch.anchorIndex + delta
-      console.log(anchorIndex)
+      let anchorIndex = parseInt(this.touch.anchorIndex) + delta
       this._scrollTo(anchorIndex)
     },
     _scrollTo (index) {
