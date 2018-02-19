@@ -1,6 +1,6 @@
 <template>
   <transition name="slide">
-    <div class="singer-detail"></div>
+    <music-list :songs='songs' :title='title' :bg-image='bgImage'></music-list>
   </transition>
 </template>
 
@@ -8,13 +8,26 @@
 import { mapGetters } from 'vuex'
 import { getSingerDetail } from 'api/singer'
 import { ERR_OK } from 'api/config'
+import { createSong } from 'common/js/song'
+import { getSongUrl } from 'api/song'
+import MusicList from 'components/music-list/music-list'
 export default {
   data () {
     return {
-      songs: []  
+      songs: []
     }
   },
   computed: {
+    title () {
+      return this.singer.name
+    },
+    bgImage () {
+      if (this.singer.avatar) {
+        if (this.singer.avatar.indexOf('150x150') !== -1) {
+          return this.singer.avatar.replace(/150x150/, '300x300')
+        }
+      }
+    },
     ...mapGetters([
       'singer'
     ])
@@ -30,16 +43,28 @@ export default {
       }
       getSingerDetail(this.singer.id).then(res => {
         if (res.code === ERR_OK) {
-          console.log(res.data.list)
+          let t = (new Date()).getUTCMilliseconds()
+          let _guid = Math.round(2147483647 * Math.random()) * t % 1e10
+          this.songs = this._normalizeSongs(res.data.list, _guid)
         }
       })
     },
-    _normalizeSongs (list) {
+    _normalizeSongs (list, _guid) {
       let ret = []
-      list.forEach(element => {
-        
-      });
+      list.forEach(s => {
+        let { musicData } = s
+        if (musicData.songid && musicData.albummid) {
+          getSongUrl(musicData.songmid, _guid).then(res => {
+            let _vkey = res.data.items[0].vkey
+            ret.push(createSong(musicData, _vkey, _guid))
+          })
+        }
+      })
+      return ret
     }
+  },
+  components: {
+    MusicList
   }
 }
 </script>
