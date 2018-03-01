@@ -1,6 +1,7 @@
 import { getLyric } from 'api/song'
-import { ERR_OK } from 'api/config'
+import { ERR_OK, commonParams } from 'api/config'
 import { Base64 } from 'js-base64'
+import jsonp from 'common/js/jsonp'
 
 export default class Song {
   constructor ({id, mid, singer, name, album, duration, image, url}) {
@@ -31,16 +32,25 @@ export default class Song {
   }
 }
 
-export function createSong (musicData, _vkey, _guid) {
-  return new Song({
-    id: musicData.songid,
-    mid: musicData.songmid,
-    singer: filterSinger(musicData.singer),
-    name: musicData.songname,
-    album: musicData.albumname,
-    duration: musicData.interval,
-    image: `https://y.gtimg.cn/music/photo_new/T002R300x300M000${musicData.albummid}.jpg?max_age=2592000`,
-    url: `http://dl.stream.qqmusic.qq.com/C400${musicData.songmid}.m4a?vkey=${_vkey}&guid=${_guid}&uin=0&fromtag=66`
+export function createSong (musicData) {
+  let t = (new Date()).getUTCMilliseconds()
+  let _guid = Math.round(2147483647 * Math.random()) * t % 1e10
+  let SongUrl = new Promise((resolve, reject) => {
+    getSongUrl(musicData.songmid, _guid).then(res => {
+      resolve(res.data.items[0].vkey)
+    })
+  })
+  return SongUrl.then(_vkey => {
+    return new Song({
+      id: musicData.songid,
+      mid: musicData.songmid,
+      singer: filterSinger(musicData.singer),
+      name: musicData.songname,
+      album: musicData.albumname,
+      duration: musicData.interval,
+      image: `https://y.gtimg.cn/music/photo_new/T002R300x300M000${musicData.albummid}.jpg?max_age=2592000`,
+      url: `http://dl.stream.qqmusic.qq.com/C400${musicData.songmid}.m4a?vkey=${_vkey}&guid=${_guid}&uin=0&fromtag=66`
+    })
   })
 }
 
@@ -53,4 +63,24 @@ function filterSinger (singer) {
     ret.push(s.name)
   })
   return ret.join('/')
+}
+
+function getSongUrl (songMid, _guid) {
+  const url = 'https://c.y.qq.com/base/fcgi-bin/fcg_music_express_mobile3.fcg'
+
+  const data = Object.assign({}, commonParams, {
+    hostUin: 0,
+    cid: 205361747,
+    needNewCode: 0,
+    songmid: songMid,
+    filename: `C400${songMid}.m4a`,
+    platform: 'yqq',
+    format: 'json',
+    g_tk: 673815377,
+    guid: _guid
+  })
+
+  return jsonp(url, data, {
+    params: 'MusicJsonCallback'
+  })
 }

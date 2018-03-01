@@ -9,7 +9,6 @@ import { mapGetters } from 'vuex'
 import { getSingerDetail } from 'api/singer'
 import { ERR_OK } from 'api/config'
 import { createSong } from 'common/js/song'
-import { getSongUrl } from 'api/song'
 import MusicList from 'components/music-list/music-list'
 export default {
   data () {
@@ -43,20 +42,17 @@ export default {
       }
       getSingerDetail(this.singer.id).then(res => {
         if (res.code === ERR_OK) {
-          let t = (new Date()).getUTCMilliseconds()
-          let _guid = Math.round(2147483647 * Math.random()) * t % 1e10
-          this.songs = this._normalizeSongs(res.data.list, _guid)
+          this.songs = this._normalizeSongs(res.data.list)
         }
       })
     },
-    _normalizeSongs (list, _guid) {
+    _normalizeSongs (list) {
       let ret = []
       list.forEach(s => {
         let { musicData } = s
         if (musicData.songid && musicData.albummid) {
-          getSongUrl(musicData.songmid, _guid).then(res => {
-            let _vkey = res.data.items[0].vkey
-            ret.push(createSong(musicData, _vkey, _guid))
+          createSong(musicData).then(res => {
+            ret.push(res)
           })
         }
       })
