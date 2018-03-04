@@ -13,7 +13,7 @@ export function getHotKey () {
   return jsonp(url, data, options)
 }
 
-export function search (query, page, zhida) {
+export function search (query, page, zhida, perpage) {
   const url = 'https://c.y.qq.com/soso/fcgi-bin/search_for_qq_cp'
 
   const data = Object.assign({}, commonParams, {
@@ -26,8 +26,8 @@ export function search (query, page, zhida) {
     ie: 'utf-8',
     sem: 1,
     aggr: 0,
-    perpage: 20,
-    n: 20,
+    perpage,
+    n: perpage,
     remoteplace: 'txt.mqq.all',
     uid: 0,
     needNewCode: 1,

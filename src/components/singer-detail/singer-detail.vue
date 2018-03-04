@@ -53,9 +53,11 @@ export default {
         if (musicData.songid && musicData.albummid) {
           createSong(musicData).then(res => {
             ret.push(res)
+            // console.log(ret)
           })
         }
       })
+      console.log(ret.length)
       return ret
     }
   },

@@ -35,7 +35,7 @@ export default class Song {
 export function createSong (musicData) {
   let t = (new Date()).getUTCMilliseconds()
   let _guid = Math.round(2147483647 * Math.random()) * t % 1e10
-  let SongUrl = new Promise((resolve, reject) => {
+  let SongUrl = new Promise(resolve => {
     getSongUrl(musicData.songmid, _guid).then(res => {
       resolve(res.data.items[0].vkey)
     })
@@ -54,7 +54,7 @@ export function createSong (musicData) {
   })
 }
 
-export function filterSinger (singer) {
+function filterSinger (singer) {
   let ret = []
   if (!singer) {
     return ''

@@ -1,5 +1,10 @@
 <template>
-  <div  class="suggest">
+  <scroll class="suggest"
+          :data="result"
+          :pullup="pullup"
+          @scrollToEnd="searchMore"
+          ref="suggest"
+  >
     <ul class="suggest-list">
       <li class="suggest-item" v-for="item in result" :key="item.songid">
         <div class="icon">
@@ -9,13 +14,14 @@
           <p class="text" v-html="getDisplayName(item)"></p>
         </div>
       </li>
+      <loading v-show="hasMore" title=""></loading>
     </ul>
-  </div>
+  </scroll>
 </template>
 
 <script type="text/ecmascript-6">
-// import Scroll from 'base/scroll/scroll'
-// import Loading from 'base/loading/loading'
+import Scroll from 'base/scroll/scroll'
+import Loading from 'base/loading/loading'
 // import NoResult from 'base/no-result/no-result'
 import { search } from 'api/search'
 import { ERR_OK } from 'api/config'
@@ -24,6 +30,7 @@ import { createSong } from 'common/js/song'
 // import Singer from 'common/js/singer'
 
 const TYPE_SINGER = 'singer'
+const perpage = 20
 
 export default {
   props: {
@@ -39,16 +46,41 @@ export default {
   data () {
     return {
       page: 1,
-      result: []
+      songList: [],
+      result: [],
+      pullup: true,
+      hasMore: true
     }
   },
   methods: {
     search () {
-      search(this.query, this.page, this.showSinger).then(res => {
+      this.page = 1
+      this.$refs.suggest.scrollTo(0, 0)
+      this.hasMore = true
+      search(this.query, this.page, this.showSinger, perpage).then(res => {
         if (res.code === ERR_OK) {
-          this.result = this._genResult(res.data)
+          this._genResult(res.data)
+          this._checkMore(res.data)
         }
       })
+    },
+    searchMore () {
+      if (!this.hasMore) {
+        return
+      }
+      this.page++
+      search(this.query, this.page, this.showSinger, perpage).then(res => {
+        if (res.code === ERR_OK) {
+          this._moreResult(res.data)
+          this._checkMore(res.data)
+        }
+      })
+    },
+    _checkMore (data) {
+      const song = data.song
+      if (!song.list.length || (song.curnum + song.curpage * perpage) > song.totalnum) {
+        this.hasMore = false
+      }
     },
     _genResult (data) {
       let ret = []
@@ -56,9 +88,20 @@ export default {
         ret.push({...data.zhida, ...{type: TYPE_SINGER}})
       }
       if (data.song) {
-        ret = ret.concat(this._normalizeSongs(data.song.list))
+        this._normalizeSongs(data.song.list).then(res => {
+          ret = ret.concat(res)
+          this.result = ret
+        })
       }
-      return ret
+    },
+    _moreResult (data) {
+      let ret = []
+      if (data.song) {
+        this._normalizeSongs(data.song.list).then(res => {
+          ret = ret.concat(res)
+          this.result = this.result.concat(ret)
+        })
+      }
     },
     getIconCls (item) {
       if (item.type === TYPE_SINGER) {
@@ -71,28 +114,43 @@ export default {
       if (item.type === TYPE_SINGER) {
         return item.singername
       } else {
-        return `${item.songname}-${item.singer}`
+        return `${item.name}-${item.singer}`
       }
     },
     _normalizeSongs (list) {
-      let ret = []
-      list.forEach(musicData => {
-        if (musicData.songid && musicData.albummid) {
-          async function getRS () {
-            let rs = await createSong(musicData)
-            console.log(rs)
-            return rs
-          }
-          ret.push(getRS ())
-        }
+      let p = new Promise(resolve => {
+        let ret = []
+        list.forEach(musicData => {
+          (async () => {
+            if (musicData.songid && musicData.albummid) {
+              const p = await this.createSongP(musicData)
+              ret.push(p)
+            }
+            if (ret.length === perpage) {
+              resolve(ret)
+            }
+          })()
+        })
       })
-      return ret
+      return p
+    },
+    createSongP (musicData) {
+      return createSong(musicData).then(res => {
+        return Promise.resolve(res)
+      })
     }
   },
   watch: {
-    query () {
+    query (newQuery) {
       this.search()
+      if (newQuery === '') {
+        this.result = []
+      }
     }
+  },
+  components: {
+    Scroll,
+    Loading
   }
 }
 </script>
