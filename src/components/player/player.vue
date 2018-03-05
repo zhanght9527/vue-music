@@ -327,7 +327,7 @@ export default {
       let offsetWidth
       let opacity
       if (this.currentShow === 'cd') {
-        if (this.touch.percent > 0.1) {
+        if (this.touch.percent > 0.2) {
           offsetWidth = -window.innerWidth
           opacity = 0
           this.currentShow = 'lyric'
@@ -336,7 +336,7 @@ export default {
           opacity = 1
         }
       } else {
-        if (this.touch.percent < 0.9) {
+        if (this.touch.percent < 0.8) {
           offsetWidth = 0
           this.currentShow = 'cd'
           opacity = 1
