@@ -4,6 +4,8 @@
           :pullup="pullup"
           @scrollToEnd="searchMore"
           ref="suggest"
+          :beforeScroll="beforeScroll"
+          @beforeScroll="listScroll"
   >
     <ul class="suggest-list">
       <li class="suggest-item" v-for="item in result" :key="item.songid" @click="selectItem(item)">
@@ -16,13 +18,16 @@
       </li>
       <loading v-show="hasMore" title=""></loading>
     </ul>
+    <div class="no-result-wrapper" v-show="!hasMore && !result.length">
+      <no-result title="抱歉，暂无搜索结果"></no-result>
+    </div>
   </scroll>
 </template>
 
 <script type="text/ecmascript-6">
 import Scroll from 'base/scroll/scroll'
 import Loading from 'base/loading/loading'
-// import NoResult from 'base/no-result/no-result'
+import NoResult from 'base/no-result/no-result'
 import { search } from 'api/search'
 import { ERR_OK } from 'api/config'
 import { createSong } from 'common/js/song'
@@ -49,7 +54,8 @@ export default {
       songList: [],
       result: [],
       pullup: true,
-      hasMore: true
+      hasMore: true,
+      beforeScroll: true
     }
   },
   methods: {
@@ -66,6 +72,10 @@ export default {
       } else {
         this.insertSong(item)
       }
+      this.$emit('select')
+    },
+    listScroll () {
+      this.$emit('listScroll')
     },
     search () {
       this.page = 1
@@ -170,7 +180,8 @@ export default {
   },
   components: {
     Scroll,
-    Loading
+    Loading,
+    NoResult
   }
 }
 </script>
@@ -204,6 +215,6 @@ export default {
     .no-result-wrapper
       position: absolute
       width: 100%
-      top: 50%
+      top: 40%
       transform: translateY(-50%)
 </style>

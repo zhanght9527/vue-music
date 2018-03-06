@@ -9,29 +9,39 @@
           <h1 class="title">热门搜索</h1>
           <ul>
             <li class="item" v-for="item in hotKey" :key="item.n" @click="addQuery(item.k)">
-              <span>{{item.k}}</span>
+              <span>{{deleteSpace(item.k)}}</span>
             </li>
           </ul>
+        </div>
+        <div class="search-history" v-show="searchHistory.length">
+          <h1 class="title">
+            <span class="text">搜索历史</span>
+            <span class="clear" @click="clearSearchHistory">
+              <i class="icon-clear"></i>
+            </span>
+          </h1>
+          <search-list :searches="searchHistory" @select="addQuery" @delete="deleteSearchHistory"></search-list>
         </div>
       </div>
     </div>
     <div class="search-result" v-show="query">
-      <suggest :query="query"></suggest>
+      <suggest :query="query" @listScroll="blurInput" @select="saveSearch"></suggest>
     </div>
+    <confirm></confirm>
     <router-view></router-view>
   </div>
 </template>
 
 <script type="text/ecmascript-6">
 import SearchBox from 'base/search-box/search-box'
-// import SearchList from 'base/search-list/search-list'
+import SearchList from 'base/search-list/search-list'
 // import Scroll from 'base/scroll/scroll'
-// import Confirm from 'base/confirm/confirm'
+import Confirm from 'base/confirm/confirm'
 import Suggest from 'components/suggest/suggest'
 import { getHotKey } from 'api/search'
 import {ERR_OK} from 'api/config'
 // import {playlistMixin, searchMixin} from 'common/js/mixin'
-// import {mapActions} from 'vuex'
+import { mapActions, mapGetters } from 'vuex'
 
 export default {
   created () {
@@ -51,16 +61,37 @@ export default {
         }
       })
     },
+    blurInput () {
+      this.$refs.searchBox.blur()
+    },
+    saveSearch () {
+      this.saveSearchHistory(this.query)
+    },
     addQuery (query) {
-      this.$refs.searchBox.setQuery(query)
+      this.$refs.searchBox.setQuery(this.deleteSpace(query))
     },
     onQueryChange (query) {
       this.query = query
-    }
+    },
+    deleteSpace (val) {
+      return val.trim()
+    },
+    ...mapActions([
+      'saveSearchHistory',
+      'deleteSearchHistory',
+      'clearSearchHistory'
+    ])
+  },
+  computed: {
+    ...mapGetters([
+      'searchHistory'
+    ])
   },
   components: {
     SearchBox,
-    Suggest
+    Suggest,
+    SearchList,
+    Confirm
   }
 }
 </script>
