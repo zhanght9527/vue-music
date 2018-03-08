@@ -7,7 +7,7 @@
             <img width="100" height="100" v-lazy="item.picUrl"/>
           </div>
           <ul class="songlist">
-            <li class="song" v-for="(song, index) in item.songList" :key="song.songname">
+            <li class="song" v-for="(song, index) in item.songList" :key="song.id">
               <span>{{index + 1}}</span>
               <span>{{song.songname}}-{{song.singername}}</span>
             </li>
