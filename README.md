@@ -2,6 +2,8 @@
 
 👉 慕课网学习地址: [http://coding.imooc.com/class/107.html](http://coding.imooc.com/class/107.html)
 
+👉 项目演示地址： [http://music.y1f2.com/music](http://music.y1f2.com/music)
+
 基于 **Vue 全家桶 (2.x)**  制作的移动端音乐 WebApp ，项目完整、功能完备、UI美观、交互一流。
 
 ## 技术栈
