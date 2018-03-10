@@ -104,6 +104,54 @@
 
 将 `localstorage` 中 “我的收藏” 和 “最近播放” 显示到界面上
 
+## 碰到的一些坑
+
+#### iOS 微信里点击不能播放歌曲了，PC 可以
+
+原因：vue升级到2.5之后，nextTick的核心实现改变导致对audio的播放的影响，参照黄轶老师的文章[Vue.js 升级踩坑小记](https://juejin.im/post/5a1af88f5188254a701ec230)
+
+解决方法：将vue的版本固定在2.4.1，同时vue-template-compiler的版本也要和vue的版本保持一致。
+
+#### 异步获得的数据还没有拿到就显示出来
+
+原因：不同于老师的源码，歌曲播放url是通过songmid、vkey、guid拿到的，最后返回的是一个Promise对象，不能直接继续进行同步操作。
+
+解决方法：使用`await`关键字
+
+```
+_normalizeSongs (list) {
+  let p = new Promise(resolve => {
+    let ret = []
+    list.forEach(musicData => {
+      (async () => {
+        if (musicData.songid && musicData.albummid) {
+          const p = await this.createSongP(musicData)
+          ret.push(p)
+        }
+        if (ret.length === perpage) {
+          resolve(ret)
+        }
+      })()
+    })
+  })
+  return p
+},
+createSongP (musicData) {
+  return createSong(musicData).then(res => {
+    return Promise.resolve(res)
+  })
+}
+```
+
+## 收获
+
+1. 总结了一套 Vue 通用组件，可以在其它项目中复用的 10+ 个基础组件、15+ 个业务组件
+2. 总结了一套常用的 Stylus mixin 库
+3. 总结了一套常用的 JS 工具函数库
+4. 体会到组件化、模块化开发带来的便捷
+5. 体会到将对象封装成类(ES6 class) 的便捷性，以及利用工厂方式初始化类实例
+6. 学会利用 `js` 编写过渡效果及动画效果制作良好的用户交互体验
+
 
 ## Build Setup
 
